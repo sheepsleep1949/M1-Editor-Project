@@ -1,0 +1,23 @@
+{
+  "taskId": "M2-1",
+  "provider": "M2 姓名待填写",
+  "receivers": [
+    "M3",
+    "M5"
+  ],
+  "contractVersion": "1.0",
+  "commit": "待填写实际 Git 提交",
+  "files": [
+    "packages/engine/src/index.ts",
+    "fixtures/expected/rules.expected.json"
+  ],
+  "verificationCommand": "npm test -- tests/engine.test.ts",
+  "providerResult": "本机结果见 verification.json",
+  "receiverResult": "待成员独立复核",
+  "knownLimits": [
+    "完整状态搜索和在线操作事务尚未实现"
+  ],
+  "nextTask": "M2-2 / M2-3",
+  "acceptedBy": null,
+  "acceptedAt": null
+}

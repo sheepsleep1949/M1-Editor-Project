@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>M3 检查验证任务与交接</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>M3 检查验证任务与交接</h1>
+<section><h2>前期成果与检查范围</h2>
+<p class="p">你负责发布前检查及质量证据汇总。结构检查已实现，状态反例和报告格式已给出；下一步在完整逻辑状态上搜索。共同基线为《00 共同接口与交接规范》。机器可读契约在 packages/contracts/openapi.json；同名字段与错误码不得各自改写。</p>
+<h3 class="h">已交付给你的文件</h3>
+<p class="p">packages/engine/src/index.ts 的 validateStructure；fixtures/invalid 下 11 个错误故事；fixtures/expected/validation.expected.json；fixtures/api/check-incomplete.response.json；tests/engine.test.ts 的结构检查用例。后续可将 validator 移到独立包，需保持原导出兼容。</p>
+<table><thead><tr><th>层级</th><th>样例与预期</th><th>当前状态</th></tr></thead><tbody><tr><td>结构</td><td>缺目标 TARGET_NOT_FOUND；缺起点 ENTRY_NOT_FOUND；重节点 DUPLICATE_NODE</td><td>已有实现与测试</td></tr><tr><td>结构</td><td>未声明变量 UNKNOWN_VARIABLE；冲突效果 DUPLICATE_EFFECT；结局有出口 ENDING_HAS_CHOICES</td><td>已有实现与测试</td></tr><tr><td>结构</td><td>变量超限 SCHEMA_INVALID；孤立节点 STRUCTURALLY_UNREACHABLE</td><td>已有实现与测试</td></tr><tr><td>状态</td><td>拿不到钥匙，目标结局 ENDING_UNREACHABLE</td><td>反例已写，算法待做</td></tr><tr><td>状态</td><td>可达非结局无合法选择 NONTERMINAL_DEADLOCK</td><td>反例和路径已写</td></tr><tr><td>状态</td><td>有选择但陷入闭环 NO_ENDING_REACHABLE</td><td>反例和路径已写</td></tr><tr><td>预算</td><td>maxStates=1 强制截断，complete=false</td><td>预期已写，算法待做</td></tr></tbody></table>
+<h3 class="h">不能误报的情况</h3>
+<p class="p">合法退出和失败结局都属于结局，不是死端。可以返回取钥匙的路线属于正常回访。一个节点在不同变量状态下必须分别处理；只按 nodeId 去重会漏掉本项目最重要的错误。</p>
+<p class="small">结构反例的 requiredCodes 表示必须包含，不要求只出现一个错误；状态反例可能同时触发死端、无结局可达、结局不可达，报告应解释各自含义。</p>
+</section>
+<section><h2>算法 接口与交接</h2>
+<h3 class="h">完整搜索的实现顺序</h3>
+<p class="p">1 先完成结构检查，有阻断错误则不运行状态搜索。2 从 initialState 开始 BFS。3 状态键为 nodeId 加按变量声明顺序排列的全部布尔值。4 用 getChoices/applyChoice 扩展合法转移。5 记录每个状态的前驱选择及全部转移边。6 从结局状态沿反向边搜索，找出无法到达任何结局的可达状态。</p>
+<p class="p">非结局没有合法出口记 NONTERMINAL_DEADLOCK。非结局有出口但无法到达任一结局记 NO_ENDING_REACHABLE。声明的结局没有任何可达状态记 ENDING_UNREACHABLE。反例 path 只包含从初始状态实际可执行的选择前缀；不能为不可达节点编造到达路径。</p>
+<pre class="code">validateStory(story, {maxStates,maxTimeMs})<br>  -&gt; {complete,publishable,visitedStates,truncationReason,issues}<br>POST /api/v1/activities/{activityId}/checks<br>body: {expectedRevision}<br>response.data: ValidationReport</pre>
+<p class="p">服务层确认作者和修订，捕获快照与摘要，为纯检查结果添加 reportId/activityId/revision/snapshotDigest/validatorVersion。默认预算 6000 状态或 5000ms，达到上限返回未完成；预算由服务端集中配置。结构错误时 complete=false、visitedStates=0、truncationReason=null。只在完整搜索后判断全局不可达，截断时不能根据“尚未找到”宣布不存在。</p>
+<table><thead><tr><th>接收方</th><th>提供内容</th><th>验收方式</th></tr></thead><tbody><tr><td>M1</td><td>Issue 中 nodeId/choiceId/state/path/unmet</td><td>点击定位到具体选项；修改后旧报告过期</td></tr><tr><td>M2</td><td>可执行的反例路径和预期阻塞状态</td><td>M2 逐步执行复现相同状态</td></tr><tr><td>M4</td><td>CoreValidation 与同候选快照摘要</td><td>任何 error、未完成、过期修订都不可发布</td></tr></tbody></table>
+<p class="small">发布通过条件：结构合法、搜索完整、没有阻断问题、所有声明结局可达。不能仅根据 issues.length=0 判断，因为预算耗尽可能还没有产生问题。</p>
+</section>
+<section><h2>后续任务 完成条件与门禁</h2>
+<table><thead><tr><th>阶段</th><th>任务</th><th>验收条件</th></tr></thead><tbody><tr><td>W2 M3-1 收尾</td><td>扩充重复选择 条件重复等结构校验，报告对象定位</td><td>错误码稳定；正常两故事无结构误报</td></tr><tr><td>W3至W5 M3-2</td><td>完整状态搜索、前驱与反向可达性</td><td>三类状态反例发现；正常循环搜索终止；相同节点不同状态不合并</td></tr><tr><td>W5 M3-3</td><td>路径与条件解释、预算截断报告</td><td>反例可由引擎复现；未完成绝不显示通过</td></tr><tr><td>W5至W6 M3-4</td><td>与发布服务绑定同快照和修订</td><td>检查后改草稿不能使用旧结果发布</td></tr><tr><td>W6至W8 M3-5</td><td>汇总全组实际回归与性能结果</td><td>每个强制场景有实际证据；无阻断缺陷</td></tr></tbody></table>
+<h3 class="h">本模块门禁</h3>
+<p class="p">M2 和 M1 植入错误、运行检查、按路径复现、修复后重跑。伪造可达路径、把合法结局当死端、截断报通过、只按节点去重，都直接阻断。性能数据须附机器、样例、节点与变量数、访问状态数和耗时，不声称支持任意复杂脚本。</p>
+<h3 class="h">接手后的第一天</h3>
+<p class="p">先读正常故事和三个状态反例，手推 blocked-state 的 c_enter 与 closed-loop 的 c_search/c_return/c_enter。写一个仅输出可达完整状态集合的 BFS，先用固定小样例比对状态集合；正确后再增加问题分类与 UI 报告。</p>
+<h3 class="h">质量责任</h3>
+<p class="p">你整理统一验收矩阵并审查结果，但其他四人必须编写和执行自己模块的测试。共享引擎能减少不一致，却不能证明引擎本身正确；始终保留手工预期，不用被测算法反过来生成自己的期望值。</p>
+<p class="small">已完成：结构检查和前期样例。未完成：完整状态搜索、正式发布校验、团队回归和性能验收。</p>
+</section>
+</html>

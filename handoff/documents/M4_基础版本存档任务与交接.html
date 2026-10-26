@@ -1,0 +1,42 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>M4 基础版本存档任务与交接</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>M4 基础版本存档任务与交接</h1>
+<section><h2>前期成果与基础工程</h2>
+<p class="p">你负责公共工程、鉴权、数据库规范、固定版本和存档。工程与登录已有本机可用实现，下一步提供业务资源权限并接版本、存档。各成员负责各自业务 API，你不承担全组后端。共同基线为《00 共同接口与交接规范》。机器可读契约在 packages/contracts/openapi.json；同名字段与错误码不得各自改写。</p>
+<h3 class="h">已交付给你的文件</h3>
+<p class="p">根 package.json/package-lock.json/.env.example；apps/api/src 下 app/auth/db/main；apps/api/prisma 下 schema 与初始化 migration；scripts/db-deploy.ts、seed.ts；tests/foundation.test.ts；所有契约与 README 启动说明。</p>
+<table><thead><tr><th>目录</th><th>责任与可用状态</th></tr></thead><tbody><tr><td>apps/web</td><td>React Vite 入口；登录与只读样例图可运行，业务编辑待做</td></tr><tr><td>apps/api</td><td>Fastify；health/login/me/logout/dev fixtures 已实现</td></tr><tr><td>packages/contracts</td><td>共享类型、JSON Schema、模块端口、26 个 HTTP 操作契约</td></tr><tr><td>packages/engine</td><td>纯规则执行与结构检查；不依赖 ORM 或页面</td></tr><tr><td>fixtures</td><td>正常 错误 事件 API 样例；只供测试和开发展示</td></tr><tr><td>handoff</td><td>交接记录、状态、验证证据、访谈提纲和文档源</td></tr></tbody></table>
+<h3 class="h">账号与环境边界</h3>
+<p class="p">演示账号为 creator@example.test 与 player@example.test，都是虚构本地账号；密码来自首次 seed 的 DEMO_PASSWORD。数据库仅存加盐哈希。seed 不覆盖已有密码，生产环境拒绝执行。AuthSession 只存随机 Cookie 令牌的哈希。</p>
+<p class="p">.env 不入版本库，只有 .env.example 可交接。只包含公开配置的 VITE_ 变量才能进前端；数据库位置、密码和令牌不能放进 VITE_。默认服务绑定本机回环地址。当前鉴权属于课程开发骨架，对外部署前还要完成资源权限与运行配置检查。</p>
+<p class="small">首版明确锁定 Prisma 6.19.0。不要直接升级 latest；共享事务使用 db.$transaction 和 Prisma.TransactionClient。</p>
+</section>
+<section><h2>数据库与版本存档接口</h2>
+<table><thead><tr><th>实体关系</th><th>必须保持的不变量</th></tr></thead><tbody><tr><td>User → Activity → Draft</td><td>一活动一草稿；revision 条件更新；作者 ID 不能由正文指定</td></tr><tr><td>Activity → PublishedVersion</td><td>每个活动 versionNumber 唯一；story/assets 摘要与规则版本固定</td></tr><tr><td>User + Version → PlaySession</td><td>会话只绑定一个版本；initialState 与当前 state 分开</td></tr><tr><td>Session → PlayEvent</td><td>(sessionId,seq)、(sessionId,requestId) 唯一；追加事件</td></tr><tr><td>Session + Version → Save</td><td>保存服务端当前状态；同时核对玩家、版本及 sourceSeq</td></tr><tr><td>Session → Feedback</td><td>nodeId/eventSeq 必须能对上实际访问；分享授权有效才给作者</td></tr><tr><td>User → OperationReceipt</td><td>kind/scopeId/requestId 唯一；同载荷重试返回原响应</td></tr></tbody></table>
+<pre class="code">POST /activities/{activityId}/versions<br>  {expectedRevision,requestId} -&gt; Version<br>POST /sessions/{sessionId}/saves<br>  {expectedSeq,requestId,label} -&gt; Save<br>POST /saves/{saveId}/restores<br>  {requestId,shareWithCreator} -&gt; 新 Session</pre>
+<p class="p">以上均有 /api/v1 前缀。版本 GET 与列表、本人 saves 列表也由你实现。保存不接收 state/versionId，直接读取会话。恢复不接收“最新版本”参数，永远用存档原版。创建、发布、保存与恢复都在同事务写业务数据和 OperationReceipt。</p>
+<h3 class="h">发布交接</h3>
+<p class="p">从 M1 接 expectedRevision，从 M3 接 validateStory。先捕获候选内容并检查，再在最终事务核对 revision，保存同一候选快照和摘要。旧版本没有更新接口；后续按需加数据库约束防误改。素材 ID 不存在或哈希不符时拒绝发布；文件按内容哈希留存，不覆盖旧资源。运行中加载失败可降级纯文字。</p>
+<h3 class="h">权限交接</h3>
+<p class="p">提供可复用的当前用户、活动归属、会话归属及分享读取检查函数。业务模块必须调用这些函数。所有外键存在不代表有权限；会话与存档版本一致等跨表业务不变量仍要在事务中验证，不能只依赖 Prisma 的类型。</p>
+</section>
+<section><h2>启动步骤与交接验证</h2>
+<p class="p">在 starter 根目录使用 Node 22.12 或更高的受支持版本和 npm。按 lock 安装，不重新生成依赖版本。以下命令从根目录执行：</p>
+<pre class="code">npm ci<br>复制 .env.example 为 .env 并设置 DEMO_PASSWORD<br>npm run db:generate<br>npm run db:deploy<br>npm run db:seed<br>npm run verify<br>npm run dev</pre>
+<p class="p">浏览器打开 http://localhost:5173。前端代理 /api 到 127.0.0.1:3001；WEB_ORIGIN 与浏览器地址须一致。登录后能加载两套只读配置图。npm ci 若提示依赖安装脚本未批准，按 npm 提示仅批准 Prisma 与 esbuild 的必要脚本，再执行 db:generate；不得跳过失败继续写验收成功。</p>
+<h3 class="h">首次数据库创建的已处理问题</h3>
+<p class="p">本机 Prisma 6 的空库迁移在 SQLite 文件尚不存在时曾失败。db-deploy.ts 先排他创建空文件，再 migrate deploy；已有文件不覆盖。后续统一使用 npm run db:deploy。测试使用独立临时数据库，不能指向团队正在使用的数据。</p>
+<h3 class="h">给队友的最小交接包</h3>
+<p class="p">提供仓库提交、README、.env.example、lock、schema/migration、鉴权与 withTx 的导入路径、测试命令、错误格式。队友只需要配置环境变量，不应修改源码中的绝对路径。所有本机数据库、node_modules、Cookie、.env 都不放进分发压缩包。</p>
+<table><thead><tr><th>交接对象</th><th>对方必须完成</th></tr></thead><tbody><tr><td>全组</td><td>从新目录安装、迁移、seed、测试、启动；填写实际机器与结果</td></tr><tr><td>M1</td><td>两账号验证草稿归属及旧 revision 冲突</td></tr><tr><td>M2 / M5</td><td>同一个 DbTx 写状态和事件，故意抛错后整体回滚</td></tr><tr><td>M2 / M5</td><td>恢复新会话仍关联原版本，原会话记录不变</td></tr></tbody></table>
+<p class="small">本机测试不替代另一台电脑验收；基础事务回滚测试不替代尚未实现的“状态加事件”完整事务测试。</p>
+</section>
+<section><h2>后续任务 完成条件与门禁</h2>
+<table><thead><tr><th>阶段</th><th>任务</th><th>验收条件</th></tr></thead><tbody><tr><td>W2 M4-1 收尾</td><td>协助四人独立启动，记录配置问题</td><td>四人各有真实启动记录；共享事务可调用</td></tr><tr><td>W2至W3 M4-2</td><td>封装资源权限和草稿修订基础</td><td>不同账号拒绝读取私有草稿 存档 事件</td></tr><tr><td>W3至W4 M4-3</td><td>固定版本发布与幂等；W6 接完整检查</td><td>编辑草稿不改变 v1；过期修订拒绝；同次发布不重复</td></tr><tr><td>W4至W5 M4-4</td><td>保存与恢复分支</td><td>v1 存档在 v2 后仍可用；新 seq 从 0 开始，来源可查</td></tr><tr><td>W6至W8 M4-5</td><td>部署 配置清单 备份恢复</td><td>其他机器运行；恢复后版本 存档 事件关联完整</td></tr></tbody></table>
+<h3 class="h">本模块门禁</h3>
+<p class="p">M2 和 M5 使用两个账号、两个版本、一份旧存档，完成发布、更新草稿、恢复旧版、继续、回放。然后停服务备份，在独立目录恢复并验证。旧版本被覆盖、跨账号访问、错误绑定最新版、只有本机能运行，都阻断验收。</p>
+<h3 class="h">接手后的第一天</h3>
+<p class="p">按 README 在独立目录跑一次，认领 auth/db/migration，给每个业务模块提供 requireUser 和资源归属工具。随后与 M1 合作完成真实草稿读写。此时可为 M2 提供专用测试版本创建工具，但标明测试用途，不绕过正式发布门禁。</p>
+<h3 class="h">数据库修改规则</h3>
+<p class="p">其他人提出字段变更与迁移需求，你审核关系和影响，再生成新迁移。已经交接的旧迁移不得修改。避免直接 db push 改共享数据后忘记留下 migration。备份采用停服务复制或 SQLite 在线备份方法，不能随意复制正在写入且存在未合并 WAL 的单个文件。</p>
+<p class="small">已完成：基础工程、迁移、登录、演示账号和本机检查。未完成：业务权限、版本存档功能、成员机器复核及正式部署。</p>
+</section>
+</html>

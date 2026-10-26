@@ -1,0 +1,107 @@
+{
+  "comparison": "requiredCodes 为必须包含的问题码，允许同一根因产生额外明确诊断；state 类用例为后续实现，当前未通过。",
+  "cases": [
+    {
+      "file": "invalid/missing-target.story.json",
+      "requiredCodes": [
+        "TARGET_NOT_FOUND"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/missing-entry.story.json",
+      "requiredCodes": [
+        "ENTRY_NOT_FOUND"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/duplicate-node.story.json",
+      "requiredCodes": [
+        "DUPLICATE_NODE"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/unknown-variable.story.json",
+      "requiredCodes": [
+        "UNKNOWN_VARIABLE"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/conflicting-effect.story.json",
+      "requiredCodes": [
+        "DUPLICATE_EFFECT"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/ending-choice.story.json",
+      "requiredCodes": [
+        "ENDING_HAS_CHOICES"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/variable-limit.story.json",
+      "requiredCodes": [
+        "SCHEMA_INVALID"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/unreachable-node.story.json",
+      "requiredCodes": [
+        "STRUCTURALLY_UNREACHABLE"
+      ],
+      "phase": "structure",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/unobtainable-key.story.json",
+      "requiredCodes": [
+        "ENDING_UNREACHABLE"
+      ],
+      "phase": "state",
+      "witnessChoices": []
+    },
+    {
+      "file": "invalid/blocked-state.story.json",
+      "requiredCodes": [
+        "NONTERMINAL_DEADLOCK",
+        "NO_ENDING_REACHABLE"
+      ],
+      "phase": "state",
+      "witnessChoices": [
+        "c_enter"
+      ]
+    },
+    {
+      "file": "invalid/closed-loop.story.json",
+      "requiredCodes": [
+        "NO_ENDING_REACHABLE"
+      ],
+      "phase": "state",
+      "witnessChoices": [
+        "c_search",
+        "c_return",
+        "c_enter"
+      ]
+    }
+  ],
+  "budgetCase": {
+    "maxStates": 1,
+    "maxTimeMs": 5000,
+    "complete": false,
+    "publishable": false,
+    "truncationReason": "STATE_LIMIT"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0",
+  "rulesVersion": "1.0",
+  "title": "午夜校园广播",
+  "entryNodeId": "radio_start",
+  "variables": [
+    {
+      "id": "heard_code",
+      "label": "已听到口令",
+      "kind": "flag",
+      "initial": false
+    }
+  ],
+  "nodes": [
+    {
+      "id": "radio_start",
+      "title": "广播响起",
+      "body": "旧广播突然响起。",
+      "kind": "scene",
+      "media": {},
+      "choices": [
+        {
+          "id": "radio_listen",
+          "label": "听完广播",
+          "targetNodeId": "radio_hall",
+          "conditions": [],
+          "effects": [
+            {
+              "variableId": "heard_code",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "radio_ignore",
+          "label": "直接离开",
+          "targetNodeId": "radio_end_quiet",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "radio_hall",
+      "title": "走廊",
+      "body": "你记住了口令，可以去控制室或者返回。",
+      "kind": "scene",
+      "media": {},
+      "choices": [
+        {
+          "id": "radio_door",
+          "label": "前往控制室",
+          "targetNodeId": "radio_control",
+          "conditions": [
+            {
+              "variableId": "heard_code",
+              "equals": true
+            }
+          ],
+          "effects": []
+        },
+        {
+          "id": "radio_back",
+          "label": "回到入口",
+          "targetNodeId": "radio_start",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "radio_control",
+      "title": "控制室",
+      "body": "有人设置了循环播放。",
+      "kind": "scene",
+      "media": {},
+      "choices": [
+        {
+          "id": "radio_stop",
+          "label": "关闭循环播放",
+          "targetNodeId": "radio_end_stop",
+          "conditions": [],
+          "effects": []
+        },
+        {
+          "id": "radio_keep",
+          "label": "保留广播",
+          "targetNodeId": "radio_end_keep",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "radio_end_quiet",
+      "title": "安静离开",
+      "body": "你离开了教学楼。",
+      "kind": "ending",
+      "media": {},
+      "choices": []
+    },
+    {
+      "id": "radio_end_stop",
+      "title": "广播停止",
+      "body": "校园恢复安静。",
+      "kind": "ending",
+      "media": {},
+      "choices": []
+    },
+    {
+      "id": "radio_end_keep",
+      "title": "继续播放",
+      "body": "你保留了校庆录音。",
+      "kind": "ending",
+      "media": {},
+      "choices": []
+    }
+  ]
+}

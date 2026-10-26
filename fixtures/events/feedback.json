@@ -1,0 +1,16 @@
+{
+  "sessionId": "session_fixture_1",
+  "request": {
+    "requestId": "feedback_fixture_1",
+    "eventSeq": 2,
+    "nodeId": "n_start",
+    "category": "confusing",
+    "text": "第二次回到活动室时，我才发现进入按钮已经解锁。"
+  },
+  "expectedBinding": {
+    "versionId": "version_fixture_1",
+    "nodeId": "n_start",
+    "eventSeq": 2
+  },
+  "note": "序号 0 指初始状态；序号 k 指第 k 次操作之后的状态，不指操作之前。"
+}

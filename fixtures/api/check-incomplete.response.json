@@ -1,0 +1,14 @@
+{
+  "data": {
+    "reportId": "report_fixture_1",
+    "activityId": "activity_fixture_1",
+    "revision": 4,
+    "snapshotDigest": "sha256-example-only",
+    "validatorVersion": "1.0",
+    "complete": false,
+    "publishable": false,
+    "visitedStates": 1,
+    "truncationReason": "STATE_LIMIT",
+    "issues": []
+  }
+}

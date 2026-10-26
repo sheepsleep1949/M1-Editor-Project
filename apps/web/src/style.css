@@ -1,0 +1,65 @@
+:root {
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+  color: #172636;
+  background: #edf2f6;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1120px;
+  margin: 36px auto;
+  padding: 28px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 12px 36px #1232;
+}
+header {
+  max-width: 860px;
+}
+.eyebrow {
+  color: #315e83;
+  font-weight: 600;
+}
+h1 {
+  font-size: 30px;
+  margin: 12px 0;
+}
+p {
+  line-height: 1.7;
+}
+form,
+.toolbar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  padding: 20px 0;
+  flex-wrap: wrap;
+}
+label {
+  display: grid;
+  gap: 6px;
+}
+input {
+  padding: 10px;
+  border: 1px solid #aab9c6;
+  border-radius: 6px;
+  font: inherit;
+}
+button {
+  padding: 11px 18px;
+  background: #204e75;
+  color: white;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  cursor: pointer;
+}
+.canvas {
+  height: 480px;
+  border: 1px solid #ccd8e1;
+  border-radius: 12px;
+}
+.react-flow__node {
+  font-family: inherit;
+}

@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  passwordHash String
+  authSessions AuthSession[]
+  activities Activity[]
+  sessions PlaySession[]
+  saves Save[]
+  feedback Feedback[]
+  operations OperationReceipt[]
+}
+model AuthSession {
+  tokenHash String @id
+  userId String
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  expiresAt DateTime
+}
+model Activity {
+  id String @id @default(uuid())
+  ownerId String
+  owner User @relation(fields:[ownerId], references:[id], onDelete:Restrict)
+  title String
+  draft Draft?
+  versions PublishedVersion[]
+  createdAt DateTime @default(now())
+}
+model Draft {
+  activityId String @id
+  activity Activity @relation(fields:[activityId], references:[id], onDelete:Restrict)
+  revision Int @default(1)
+  story Json
+  layout Json
+  updatedAt DateTime @updatedAt
+}
+model PublishedVersion {
+  id String @id @default(uuid())
+  activityId String
+  activity Activity @relation(fields:[activityId], references:[id], onDelete:Restrict)
+  versionNumber Int
+  sourceRevision Int
+  story Json
+  assets Json
+  snapshotDigest String
+  schemaVersion String
+  rulesVersion String
+  publishedAt DateTime @default(now())
+  sessions PlaySession[]
+  saves Save[]
+  @@unique([activityId, versionNumber])
+}
+model PlaySession {
+  id String @id @default(uuid())
+  playerId String
+  player User @relation(fields:[playerId], references:[id], onDelete:Restrict)
+  versionId String
+  version PublishedVersion @relation(fields:[versionId], references:[id], onDelete:Restrict)
+  initialState Json
+  state Json
+  seq Int @default(0)
+  status String @default("active")
+  source Json?
+  shareWithCreator Boolean @default(false)
+  createdAt DateTime @default(now())
+  events PlayEvent[]
+  saves Save[]
+  feedback Feedback[]
+}
+model PlayEvent {
+  id String @id @default(uuid())
+  sessionId String
+  session PlaySession @relation(fields:[sessionId], references:[id], onDelete:Restrict)
+  seq Int
+  requestId String
+  requestHash String
+  choiceId String
+  before Json
+  after Json
+  delta Json
+  response Json
+  createdAt DateTime @default(now())
+  @@unique([sessionId, seq])
+  @@unique([sessionId, requestId])
+}
+model Save {
+  id String @id @default(uuid())
+  playerId String
+  player User @relation(fields:[playerId], references:[id], onDelete:Restrict)
+  versionId String
+  version PublishedVersion @relation(fields:[versionId], references:[id], onDelete:Restrict)
+  sourceSessionId String
+  sourceSession PlaySession @relation(fields:[sourceSessionId], references:[id], onDelete:Restrict)
+  sourceSeq Int
+  state Json
+  label String
+  createdAt DateTime @default(now())
+}
+model Feedback {
+  id String @id @default(uuid())
+  sessionId String
+  session PlaySession @relation(fields:[sessionId], references:[id], onDelete:Restrict)
+  authorId String
+  author User @relation(fields:[authorId], references:[id], onDelete:Restrict)
+  eventSeq Int
+  nodeId String
+  category String
+  text String
+  requestId String
+  requestHash String
+  createdAt DateTime @default(now())
+  @@unique([authorId, requestId])
+}
+model OperationReceipt {
+  id String @id @default(uuid())
+  actorId String
+  actor User @relation(fields:[actorId], references:[id], onDelete:Restrict)
+  kind String
+  scopeId String
+  requestId String
+  requestHash String
+  response Json
+  @@unique([actorId,kind,scopeId,requestId])
+}

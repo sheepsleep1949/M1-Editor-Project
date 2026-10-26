@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "REVISION_CONFLICT",
+    "message": "草稿已被更新，请重新加载后合并。",
+    "requestId": "http_fixture_1",
+    "details": {
+      "expectedRevision": 3,
+      "currentRevision": 4
+    }
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "expectedRevision": 3,
+  "story": {
+    "schemaVersion": "1.0",
+    "rulesVersion": "1.0",
+    "title": "消失的活动策划书",
+    "entryNodeId": "n_start",
+    "variables": [
+      {
+        "id": "v_key",
+        "label": "档案室钥匙",
+        "kind": "item",
+        "initial": false
+      },
+      {
+        "id": "v_clue",
+        "label": "已读借阅线索",
+        "kind": "flag",
+        "initial": false
+      }
+    ],
+    "nodes": [
+      {
+        "id": "n_start",
+        "title": "活动室通知",
+        "body": "策划书不见了。你可以查看桌面，或者尝试打开档案室。",
+        "kind": "scene",
+        "media": {},
+        "choices": [
+          {
+            "id": "c_search",
+            "label": "查看桌面",
+            "targetNodeId": "n_desk",
+            "conditions": [
+              {
+                "variableId": "v_key",
+                "equals": false
+              }
+            ],
+            "effects": [
+              {
+                "variableId": "v_key",
+                "value": true
+              },
+              {
+                "variableId": "v_clue",
+                "value": true
+              }
+            ]
+          },
+          {
+            "id": "c_enter",
+            "label": "打开档案室",
+            "targetNodeId": "n_archive",
+            "conditions": [
+              {
+                "variableId": "v_key",
+                "equals": true
+              }
+            ],
+            "effects": [
+              {
+                "variableId": "v_key",
+                "value": false
+              }
+            ]
+          },
+          {
+            "id": "c_quit",
+            "label": "先退出调查",
+            "targetNodeId": "n_exit",
+            "conditions": [],
+            "effects": []
+          }
+        ]
+      },
+      {
+        "id": "n_desk",
+        "title": "桌面线索",
+        "body": "你找到一把钥匙和一张写着借阅位置的便签。",
+        "kind": "scene",
+        "media": {},
+        "choices": [
+          {
+            "id": "c_return",
+            "label": "返回活动室",
+            "targetNodeId": "n_start",
+            "conditions": [],
+            "effects": []
+          }
+        ]
+      },
+      {
+        "id": "n_archive",
+        "title": "档案室",
+        "body": "钥匙已投入回收盒。按便签可以找到策划书。",
+        "kind": "scene",
+        "media": {},
+        "choices": [
+          {
+            "id": "c_find",
+            "label": "按线索查找",
+            "targetNodeId": "n_good",
+            "conditions": [
+              {
+                "variableId": "v_clue",
+                "equals": true
+              }
+            ],
+            "effects": []
+          },
+          {
+            "id": "c_leave",
+            "label": "结束调查",
+            "targetNodeId": "n_exit",
+            "conditions": [],
+            "effects": []
+          }
+        ]
+      },
+      {
+        "id": "n_good",
+        "title": "找回策划书",
+        "body": "你找到策划书，调查完成。",
+        "kind": "ending",
+        "media": {},
+        "choices": []
+      },
+      {
+        "id": "n_exit",
+        "title": "暂时退出",
+        "body": "本次调查结束，你可以重新开始。",
+        "kind": "ending",
+        "media": {},
+        "choices": []
+      }
+    ]
+  },
+  "layout": {
+    "positions": {
+      "n_start": {
+        "x": 0,
+        "y": 0
+      },
+      "n_desk": {
+        "x": 270,
+        "y": 0
+      },
+      "n_archive": {
+        "x": 540,
+        "y": 0
+      },
+      "n_good": {
+        "x": 0,
+        "y": 200
+      },
+      "n_exit": {
+        "x": 270,
+        "y": 200
+      }
+    },
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
+  }
+}

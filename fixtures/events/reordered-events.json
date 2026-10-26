@@ -1,0 +1,141 @@
+{
+  "session": {
+    "id": "session_fixture_1",
+    "versionId": "version_fixture_1",
+    "playerId": "player_fixture",
+    "initialState": {
+      "nodeId": "n_start",
+      "values": {
+        "v_key": false,
+        "v_clue": false
+      }
+    },
+    "state": {
+      "nodeId": "n_good",
+      "values": {
+        "v_key": false,
+        "v_clue": true
+      }
+    },
+    "seq": 4,
+    "source": null,
+    "shareWithCreator": true,
+    "status": "ended"
+  },
+  "events": [
+    {
+      "id": "event_fixture_2",
+      "sessionId": "session_fixture_1",
+      "versionId": "version_fixture_1",
+      "seq": 2,
+      "requestId": "request_fixture_2",
+      "choiceId": "c_return",
+      "before": {
+        "nodeId": "n_desk",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      },
+      "after": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      },
+      "delta": [],
+      "createdAt": "2026-10-23T00:00:02.000Z"
+    },
+    {
+      "id": "event_fixture_1",
+      "sessionId": "session_fixture_1",
+      "versionId": "version_fixture_1",
+      "seq": 1,
+      "requestId": "request_fixture_1",
+      "choiceId": "c_search",
+      "before": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": false,
+          "v_clue": false
+        }
+      },
+      "after": {
+        "nodeId": "n_desk",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      },
+      "delta": [
+        {
+          "variableId": "v_key",
+          "before": false,
+          "after": true
+        },
+        {
+          "variableId": "v_clue",
+          "before": false,
+          "after": true
+        }
+      ],
+      "createdAt": "2026-10-23T00:00:01.000Z"
+    },
+    {
+      "id": "event_fixture_3",
+      "sessionId": "session_fixture_1",
+      "versionId": "version_fixture_1",
+      "seq": 3,
+      "requestId": "request_fixture_3",
+      "choiceId": "c_enter",
+      "before": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      },
+      "after": {
+        "nodeId": "n_archive",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "delta": [
+        {
+          "variableId": "v_key",
+          "before": true,
+          "after": false
+        }
+      ],
+      "createdAt": "2026-10-23T00:00:03.000Z"
+    },
+    {
+      "id": "event_fixture_4",
+      "sessionId": "session_fixture_1",
+      "versionId": "version_fixture_1",
+      "seq": 4,
+      "requestId": "request_fixture_4",
+      "choiceId": "c_find",
+      "before": {
+        "nodeId": "n_archive",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "after": {
+        "nodeId": "n_good",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "delta": [],
+      "createdAt": "2026-10-23T00:00:04.000Z"
+    }
+  ],
+  "expected": "EVENT_SEQUENCE_ORDER"
+}

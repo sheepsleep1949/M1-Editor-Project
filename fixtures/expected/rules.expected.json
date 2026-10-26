@@ -1,0 +1,117 @@
+{
+  "note": "预期结果手工列出，运行引擎仅用于验证这些固定值；不由被测引擎生成预期。",
+  "cases": [
+    {
+      "id": "R01",
+      "choices": [
+        "c_search",
+        "c_return",
+        "c_enter",
+        "c_find"
+      ],
+      "states": [
+        {
+          "nodeId": "n_start",
+          "values": {
+            "v_key": false,
+            "v_clue": false
+          }
+        },
+        {
+          "nodeId": "n_desk",
+          "values": {
+            "v_key": true,
+            "v_clue": true
+          }
+        },
+        {
+          "nodeId": "n_start",
+          "values": {
+            "v_key": true,
+            "v_clue": true
+          }
+        },
+        {
+          "nodeId": "n_archive",
+          "values": {
+            "v_key": false,
+            "v_clue": true
+          }
+        },
+        {
+          "nodeId": "n_good",
+          "values": {
+            "v_key": false,
+            "v_clue": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "R02",
+      "choices": [
+        "c_quit"
+      ],
+      "states": [
+        {
+          "nodeId": "n_start",
+          "values": {
+            "v_key": false,
+            "v_clue": false
+          }
+        },
+        {
+          "nodeId": "n_exit",
+          "values": {
+            "v_key": false,
+            "v_clue": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "choices": [
+        "c_enter"
+      ],
+      "error": "CONDITION_NOT_MET",
+      "state": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": false,
+          "v_clue": false
+        }
+      }
+    },
+    {
+      "id": "R04",
+      "choices": [
+        "c_find"
+      ],
+      "error": "CHOICE_NOT_FOUND",
+      "state": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": false,
+          "v_clue": false
+        }
+      }
+    },
+    {
+      "id": "R05",
+      "choices": [
+        "c_search",
+        "c_return",
+        "c_search"
+      ],
+      "error": "CONDITION_NOT_MET",
+      "state": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      }
+    }
+  ]
+}

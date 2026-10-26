@@ -1,0 +1,33 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>M5 回放反馈任务与交接</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>M5 回放反馈任务与交接</h1>
+<section><h2>前期成果与事件语义</h2>
+<p class="p">你负责记录、回放、反馈与演示。前期事件协议和可核对的样例已完成，下一步先接 M2 的事务写入，再做回放。共同基线为《00 共同接口与交接规范》。机器可读契约在 packages/contracts/openapi.json；同名字段与错误码不得各自改写。</p>
+<h3 class="h">已交付给你的文件</h3>
+<p class="p">fixtures/events 下 normal、restored-branch、missing-event、reordered-events、tampered-state、feedback；contracts 中 Session/PlayEvent/FeedbackRequest 与 EventPort；scripts/check-fixtures.ts 验证正常样例和反馈绑定。</p>
+<table><thead><tr><th>字段</th><th>含义与约束</th></tr></thead><tbody><tr><td>sessionId / versionId</td><td>同一会话固定版本；DB 事件通过 session 关联版本，API 返回派生的 versionId</td></tr><tr><td>seq / requestId</td><td>seq 从 1 起连续；每次成功操作一条；requestId 对同次重试去重</td></tr><tr><td>choiceId</td><td>稳定选择 ID；不以显示文案识别操作</td></tr><tr><td>before / after / delta</td><td>操作前后完整状态和实际变化，三者需可相互核对</td></tr><tr><td>initialState / source</td><td>恢复分支以存档状态为初始状态，source 记录原会话序号</td></tr><tr><td>eventSeq / nodeId</td><td>反馈定位执行后的那次访问；0 指初始状态</td></tr></tbody></table>
+<h3 class="h">恢复样例已经固定</h3>
+<p class="p">原会话执行两步回到 n_start，key=true、clue=true，保存于原 seq=2。新分支从这个状态开始，seq=0；c_enter 为分支事件 1，c_find 为事件 2。它不是从故事最初的无钥匙状态重新执行，也不删除原来的四条记录。</p>
+<h3 class="h">重复访问怎样区分</h3>
+<p class="p">基准故事的 n_start 出现在初始 seq=0 和返回后的 seq=2。反馈样例明确绑定 seq=2。因此不能仅靠 nodeId 找反馈位置，必须同时保留 sessionId、eventSeq，并由会话确定 versionId。</p>
+<p class="small">样例中的事件 ID、账号和时间均为测试值。正式记录来自服务端执行，不能从前端上报任意 before/after 直接落库。</p>
+</section>
+<section><h2>写入 回放接口与交接</h2>
+<pre class="code">appendEvent(tx, event, requestHash, response) -&gt; Promise&lt;void&gt;<br>GET  /api/v1/sessions/{sessionId}/events<br>GET  /api/v1/sessions/{sessionId}/replay<br>POST /api/v1/sessions/{sessionId}/feedback<br>PATCH /api/v1/sessions/{sessionId}/sharing</pre>
+<p class="p">appendEvent 接收 M2 的同一事务；保存 seq/requestId 唯一键、before/after/delta 与原响应。遇到写入错误直接抛出，让 M2 回滚，不能仅记录 warning。事件查询按 seq 升序返回并附 finalSeq，首版最多 500 个成功事件，不能静默截断。</p>
+<h3 class="h">回放处理步骤</h3>
+<p class="p">验证权限与版本 → 取 initialState → 核对第一个 seq=1 → 逐个核对 before → 调用共享引擎 → 比较 after 和 delta → 记录 choicesBefore → 核对事件数、finalSeq、最终状态。缺失、乱序、状态不符分别返回 EVENT_SEQUENCE_GAP、EVENT_SEQUENCE_ORDER、EVENT_STATE_MISMATCH，status=MISMATCH 并给位置。</p>
+<pre class="code">反馈 body:<br>{requestId, eventSeq, nodeId, category, text}<br>category = bug | confusing | suggestion<br>text 1 至 1000 字符；版本由服务端会话决定</pre>
+<p class="p">只有玩家本人可提交；先明确分享给创作者。服务端以 eventSeq 找实际状态核对 nodeId；相同 requestId 同内容只写一次，不同内容报冲突。作者查看按 activityId/versionId 过滤且再次核对当前分享授权。玩家撤回授权后，作者页面和统计都不再返回该会话。</p>
+<table><thead><tr><th>交接对象</th><th>交付与复核</th></tr></thead><tbody><tr><td>M2</td><td>事件写入函数与故障注入测试；验证一操作一事件、失败全回滚</td></tr><tr><td>M4</td><td>恢复分支事件协议；验证 initialState 与 source 原样保留</td></tr><tr><td>M1 / M3</td><td>节点定位与问题路径展示；核对相同节点不同访问</td></tr></tbody></table>
+<p class="small">还负责 GET activities/{id}/feedback 和 summary，必须带 versionId。访问统计按初始节点一次、每事件 after 一次；结局统计按 ended 会话一次。授权会话才参与。</p>
+</section>
+<section><h2>后续任务 完成条件与门禁</h2>
+<table><thead><tr><th>阶段</th><th>任务</th><th>验收条件</th></tr></thead><tbody><tr><td>W2至W3 M5-2</td><td>事件写入 查询 权限，接 M2 事务</td><td>一成功一事件；失败不写；他人无权读取</td></tr><tr><td>W3至W5 M5-3</td><td>规则回放与状态对照 UI</td><td>正常与恢复样例一致；三个损坏样例明确失败</td></tr><tr><td>W5至W6 M5-4</td><td>反馈定位 分享开关 简单统计</td><td>第二次访问定位正确；重复提交去重；版本不混算</td></tr><tr><td>W6至W8 M5-5</td><td>完整演示 浏览器回归 外部试玩</td><td>另一成员可按脚本复现；三名外部同学完成试玩并留记录</td></tr></tbody></table>
+<h3 class="h">本模块门禁</h3>
+<p class="p">M2 和 M4 任选一段记录，核对每步状态；从旧存档恢复形成新分支后再次回放。只显示文本日志、绑定最新版本、缺事件却显示成功、反馈指向错误访问、授权撤回后仍可查询，都阻断验收。</p>
+<h3 class="h">接手后的第一天</h3>
+<p class="p">运行 npm run fixtures:check，手工解释 normal 和 restored-branch 的差别。先按端口实现接受 tx 的 appendEvent，并与 M2 在测试数据库里验证回滚。随后做纯 replay 函数，最后接页面；不要先做路径统计。</p>
+<h3 class="h">演示脚本初稿</h3>
+<p class="p">创作者加载故障剧情 → 检查指出问题 → 点击定位并修复 → 发布固定版本 → 玩家取得道具并存档 → 继续完成 → 作者查看授权回放及反馈 → 修改草稿并发布新版本 → 恢复旧存档仍能回放原版。每一步都记实际前置数据和期望结果。</p>
+<p class="small">已完成：事件协议、正常与损坏样例、正常样例一致性核对。未完成：正式事件服务、完整回放器、反馈统计与真实外部试玩。</p>
+</section>
+</html>
