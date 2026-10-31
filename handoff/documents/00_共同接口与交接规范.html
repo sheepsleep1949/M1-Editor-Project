@@ -1,0 +1,63 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>互动剧情平台共同接口与交接规范</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>互动剧情平台共同接口与交接规范</h1>
+<section><h2>已完成的前期成果与项目边界</h2>
+<p class="p">本包交付五人的前期设计、可用代码骨架和可核对的数据样例。每人先阅读本文，再阅读自己的任务文档。责任编号沿用 M1 至 M5；姓名和实际开工日期由团队填写。排期仍按八个有效开发周计算。</p>
+<table><thead><tr><th>成员</th><th>本次已经形成</th><th>接下来首先做</th></tr></thead><tbody><tr><td>M1</td><td>剧情结构、字段和草稿接口；两套配置；只读画布样例</td><td>接草稿 API，实现保存与编辑</td></tr><tr><td>M2</td><td>规则语义、纯函数引擎、固定预期路径及测试</td><td>会话 API 与状态和事件事务</td></tr><tr><td>M3</td><td>结构检查、八类结构错误样例、三类状态反例</td><td>完整状态搜索与反例路径</td></tr><tr><td>M4</td><td>工程、数据模型、迁移、基础登录与启动说明</td><td>资源权限、版本发布、存档</td></tr><tr><td>M5</td><td>连续与恢复事件、损坏样例、反馈定位协议</td><td>同事务事件写入与回放</td></tr></tbody></table>
+<h3 class="h">项目目标与问题陈述</h3>
+<p class="p">我们面向希望制作校园主题短篇互动故事的创作者，提供文字和节点配置、条件检查、固定版本发布、浏览器试玩及回放。我们要解决的设计问题是：分支与道具条件增加后，创作者如何发现走不通的路线，并复现试玩者遇到的问题。实际需求强度仍需通过访谈和任务观察验证。</p>
+<h3 class="h">首版范围</h3>
+<p class="p">每个故事最多 20 节点、8 个布尔变量，道具有无与状态标记合计计数。条件仅为布尔相等判断，多个条件全部满足才可执行；效果为布尔赋值。没有任意脚本、随机条件、自动节点脚本、跨版本存档迁移或多人协同编辑。素材可为空，纯文字可运行。</p>
+<h3 class="h">完成状态的准确含义</h3>
+<p class="p">本次完成的是前期交接成果和基础代码的本机验证。正式编辑器、完整状态检查、发布、在线试玩事务、存档、回放与反馈仍是后续开发。五人互审、跨电脑启动、至少两次真实访谈尚未发生，因此不把 G0 或 G1 标成整体通过。</p>
+<p class="small">机器状态记录：handoff/status.json。测试证据：handoff/verification.json。访谈提纲：handoff/interview-guide.txt。</p>
+</section>
+<section><h2>数据必须分开存放与管理</h2>
+<table><thead><tr><th>数据类别</th><th>存放位置或实体</th><th>边界与关联规则</th></tr></thead><tbody><tr><td>剧情内容</td><td>Draft.story<br>PublishedVersion.story</td><td>文字、节点、条件、效果；不含账号、运行进度、画布位置</td></tr><tr><td>画布布局</td><td>Draft.layout</td><td>节点坐标与缩放；按 nodeId 关联；不参与执行或剧情摘要</td></tr><tr><td>规则代码</td><td>packages/engine</td><td>解释通用字段；不出现某个故事的 ID、标题或道具名称判断</td></tr><tr><td>玩家状态</td><td>PlaySession.state</td><td>当前节点与所有布尔值；每个会话独立；服务端权威</td></tr><tr><td>发布快照</td><td>PublishedVersion</td><td>剧情与素材清单的完整副本；固定格式和规则版本；只新增</td></tr><tr><td>存档</td><td>Save</td><td>版本、服务端状态与原会话序号；只属于保存者</td></tr><tr><td>事件与反馈</td><td>PlayEvent / Feedback</td><td>事件追加；反馈指向一次具体访问；通过 sessionId 找版本</td></tr><tr><td>素材</td><td>目录与独立文件</td><td>使用 assetId；发布锁定内容哈希与路径；不覆盖旧资源</td></tr><tr><td>账号与登录</td><td>User / AuthSession</td><td>密码哈希与登录会话；不得混入剧情 JSON、日志或前端构建</td></tr><tr><td>环境与测试数据</td><td>.env / fixtures</td><td>地址和数据库配置独立；测试故事不得成为运行器分支逻辑</td></tr></tbody></table>
+<h3 class="h">稳定 ID 与可改文案分离</h3>
+<p class="p">节点和选择在同一个故事内使用稳定 ID，选择 ID 在整个故事内唯一。标题、正文、变量 label 都可改；它们不充当数据库主键。真实新记录由程序生成 ID，fixtures 中固定 ID 仅用于可重复测试。选择存目标节点 ID，不存数组位置。</p>
+<h3 class="h">禁止硬编码的具体规则</h3>
+<p class="p">禁止写 if (story.title === 某故事)、if (nodeId === n_archive)、固定第 3 步给钥匙或从组件文件直接读取测试剧情推进。界面显示条件取自配置和引擎；服务端重新验证。允许集中定义协议版本、字段上限、错误码等平台常量，但不得在五个模块复制五份。</p>
+<p class="small">检查方法：第二故事的 ID、变量数量、节点结构均不同；它必须使用同一引擎。已有改名测试验证变量与节点名称不是算法条件。</p>
+</section>
+<section><h2>共享字段与规则函数</h2>
+<p class="p">类型定义在 packages/contracts/src/index.ts；模块端口在 ports.ts；字段类型校验在 story.schema.json。JSON Schema 检查形状，M3 检查引用关系和路径；TypeScript 类型不能替代运行时输入校验。</p>
+<table><thead><tr><th>对象</th><th>主要字段</th><th>解释</th></tr></thead><tbody><tr><td>Story</td><td>schemaVersion rulesVersion title entryNodeId variables nodes</td><td>variables 声明 id label kind initial；节点声明 id title body kind media choices</td></tr><tr><td>Choice</td><td>id label targetNodeId conditions effects</td><td>condition={variableId,equals}；effect={variableId,value}；两者均为数组</td></tr><tr><td>RuntimeState</td><td>nodeId values</td><td>values 包含全部已声明变量，无缺失项和额外项；值只能为 boolean</td></tr><tr><td>Draft</td><td>activityId revision story layout updatedAt</td><td>revision 每次成功保存加一；布局与剧情同次保存，仍分字段</td></tr><tr><td>PlayEvent</td><td>sessionId versionId seq requestId choiceId before after delta</td><td>seq 从 1 起；第 k 个事件描述第 k 次成功选择；错误操作不记成功事件</td></tr><tr><td>ValidationReport</td><td>revision snapshotDigest complete publishable issues</td><td>还含 visitedStates truncationReason；对象定位用 nodeId 和 choiceId</td></tr></tbody></table>
+<h3 class="h">唯一规则实现</h3>
+<pre class="code">initialState(story) -&gt; RuntimeState<br>getChoices(story, state) -&gt; ChoiceView[]<br>applyChoice(story, state, choiceId) -&gt; ApplyResult<br>validateStructure(story) -&gt; Issue[]<br>validateStory(story, budget) -&gt; CoreValidation  [M3 后续实现]</pre>
+<p class="p">一次操作按以下顺序执行：验证当前状态和所属节点，核对全部条件，同时根据操作前状态计算效果差异，赋值后进入目标节点。结局节点不再接受选择；同一选择不能重复设置同一个变量。同样的输入必须有相同输出，不能读数据库、系统时间、随机数或浏览器状态。</p>
+<p class="p">getChoices 的前提是剧情已通过结构检查、规则版本受支持。applyChoice 对版本、剧情和状态仍做边界验证。后续优化可以缓存已验证的不可变快照，但不得删除 HTTP 边界校验。检查器和回放都调用此引擎，不自行复制条件判断。</p>
+<p class="small">基准路径：c_search → c_return → c_enter → c_find。对应 start(false,false) → desk(true,true) → start(true,true) → archive(false,true) → good(false,true)。完整数据见 fixtures/expected/rules.expected.json。</p>
+</section>
+<section><h2>HTTP 接口与身份边界</h2>
+<p class="p">统一前缀 /api/v1。JSON 请求，成功为 {data:结果}；退出登录 204 无正文。失败为 {error:{code,message,requestId,details?}}。URL 中 ID 都由调用方传入，actorId、ownerId、playerId 只能从服务端登录会话取得。</p>
+<table><thead><tr><th>负责人</th><th>接口族</th><th>输入与返回重点</th></tr></thead><tbody><tr><td>M4 已实现</td><td>GET health<br>POST auth/login、auth/logout<br>GET auth/me</td><td>Cookie sid；登录回用户；开发样例 dev/fixtures/{name} 也已实现</td></tr><tr><td>M1 待实现</td><td>GET/POST activities<br>GET/PUT activities/{id}/draft<br>GET assets</td><td>创建传 title/requestId；保存传 expectedRevision/story/layout；返回新 revision</td></tr><tr><td>M3 待实现</td><td>POST activities/{id}/checks</td><td>expectedRevision；返回报告；报告发现问题仍返回 200</td></tr><tr><td>M4 待实现</td><td>POST/GET activities/{id}/versions<br>GET versions/{id}</td><td>发布 expectedRevision/requestId；返回完整固定快照</td></tr><tr><td>M2 待实现</td><td>POST versions/{id}/sessions<br>GET sessions/{id}<br>POST sessions/{id}/choices</td><td>选择传 choiceId/expectedSeq/requestId；返回权威状态、seq、选项</td></tr><tr><td>M4 待实现</td><td>POST sessions/{id}/saves<br>GET saves<br>POST saves/{id}/restores</td><td>保存传 expectedSeq/requestId/label；恢复创建新的 Session</td></tr><tr><td>M5 待实现</td><td>GET sessions/{id}/events、replay<br>POST sessions/{id}/feedback<br>PATCH sessions/{id}/sharing</td><td>事件按序；反馈 eventSeq/nodeId；分享由玩家控制</td></tr><tr><td>M5 待实现</td><td>GET activities/{id}/feedback、summary</td><td>必须传 versionId 查询参数；只汇总该版本的授权会话</td></tr></tbody></table>
+<h3 class="h">权限统一规则</h3>
+<p class="p">草稿只给作者；存档只给玩家本人；已发布版本给登录用户。会话事件与回放只给玩家本人，或对应活动作者且玩家已开启 shareWithCreator。分享默认关闭，撤销后作者查询和统计都排除此会话。不同身份可由同一个账号承担，不用全局 creator 角色代替资源归属。</p>
+<p class="p">浏览器同源 Cookie 登录。写请求核对 Origin=WEB_ORIGIN。匿名返回 401；非法来源 403；私有资源无归属时按 404 隐藏存在性。基础账号已有，业务资源权限必须由各模块后续实现。</p>
+<p class="small">精确路径、参数、响应 Schema、状态码和实现状态以 openapi.json 为准，共 26 个操作；本表为阅读摘要。</p>
+</section>
+<section><h2>并发 发布 存档与事件交接</h2>
+<h3 class="h">一次有效选择由 M2 负责完整事务</h3>
+<p class="p">1 验证登录与会话归属。2 在事务内按 sessionId/requestId 找回执：同载荷返回原响应，不同载荷报 IDEMPOTENCY_CONFLICT。3 加载固定版本与当前状态，核对 expectedSeq。4 调用引擎。5 条件更新会话 where seq=expectedSeq，成功才加一。6 通过 M5 的 appendEvent(tx,...) 写事件与原响应。7 一起提交。任何一步失败都回滚。</p>
+<p class="p">M5 必须接收 M2 传入的同一个 Prisma.TransactionClient，不得内部开启独立事务，不得吞掉日志错误。数据库对 (sessionId,seq) 和 (sessionId,requestId) 有唯一约束。并发冲突要映射到明确错误，禁止自动使用新序号重放玩家的旧操作。</p>
+<h3 class="h">草稿与发布分离</h3>
+<p class="p">草稿保存使用 expectedRevision 条件更新，冲突返回 409 REVISION_CONFLICT，不覆盖。发布时 M4 捕获该修订的 story 和素材清单，计算 snapshotDigest，调用 M3 校验同一候选快照；最终事务再次核对修订，再保存同一快照和幂等回执。不能先查最新版，再把另一次读取的草稿当作已检查内容。</p>
+<p class="p">摘要约定：对 {story,assets} 递归按对象键的 Unicode 顺序排序，对数组保留顺序，使用无额外空白的 UTF-8 JSON，再计算 SHA-256 十六进制。assets 先按 id 排序；摘要不含布局、版本 ID、账号或时间。前后端不各自实现摘要算法，由服务端统一提供。</p>
+<h3 class="h">恢复产生新会话</h3>
+<p class="p">存档记录 versionId、sourceSessionId、sourceSeq 和服务端状态。恢复的新会话 initialState=存档状态、seq=0，source 保存来源；原会话不变。版本仍固定原版，不能自动升级。首版冻结 rulesVersion=1.0；不认识的版本返回 UNSUPPORTED_VERSION。</p>
+<h3 class="h">事件与反馈的时间点</h3>
+<p class="p">反馈 eventSeq=0 对应会话初始状态，eventSeq=k 对应事件 k 执行后的状态。回放必须检查序号连续、前后状态、变化和最终 seq，不能排序或补造损坏样例后宣称通过。API 可按 seq 排序查询数据库正常记录；回放输入本身乱序仍须明确拒绝。</p>
+<p class="small">requestId 由客户端为一次业务意图生成，网络重试必须复用，新的操作必须换新值。HTTP 错误中的 requestId 是服务端追踪 ID，两者不能混为一谈。</p>
+</section>
+<section><h2>交接流程与共同门禁</h2>
+<table><thead><tr><th>提供方 → 接收方</th><th>必须交付</th><th>接收方复核动作</th></tr></thead><tbody><tr><td>M1 → M2/M3</td><td>Story、Layout、保存接口与两套样例</td><td>按相同配置读节点；编辑布局不得改变运行结果</td></tr><tr><td>M2 → M3/M5</td><td>引擎导出、错误码、独立预期、测试命令</td><td>换变量和节点 ID；核对钥匙消耗及结局</td></tr><tr><td>M3 → M1/M4</td><td>对象定位报告、完整与截断结果</td><td>点击报告找到对象；未完成检查不能发布</td></tr><tr><td>M4 → 全组</td><td>环境、迁移、鉴权、DbTx、固定版本和存档约定</td><td>新目录安装；双账号；v1 存档在 v2 发布后恢复</td></tr><tr><td>M5 → M2/M4</td><td>appendEvent(tx)、回放样例、反馈定位</td><td>注入事件写失败；检查整体回滚；核对恢复分支</td></tr></tbody></table>
+<h3 class="h">一次交接怎么操作</h3>
+<p class="p">提供方提交代码、契约、样例和执行命令，并填写 handoff-record.example.json 的实际值。接收方在自己的分支拉取同一个提交，按预期操作，记录实际结果与缺陷。接口变动先改 contracts，再同时改提供方与至少一个调用方；没有完成接收验证的交接不能写 accepted。</p>
+<h3 class="h">共享文件与迁移归属</h3>
+<p class="p">M1 主责 apps/web 创作模块和 API draft 模块；M2 主责 engine 与 player；M3 主责 validator；M4 主责 db、auth、versions、saves 和 Prisma migration；M5 主责 events、replay、feedback。各人实现自己的接口与测试。修改 contracts 需受影响成员审核；数据库变动先提交 schema 方案，由 M4 合并后生成一份迁移，禁止各自改已合并的旧迁移。</p>
+<h3 class="h">合并与阶段门禁</h3>
+<p class="p">每次合并必须有 npm run verify 的成功结果和非作者复核。核心事务、版本、权限变化补相关接口或浏览器测试；现有 25 项测试只覆盖前期成果。G1 需要真实状态与事件落库并可重启恢复；当前骨架并未达到 G1。G2 是创作到发布试玩；G3 是检查与回放闭环；G4 是外部测试及可部署交付。</p>
+<h3 class="h">错误与界面处理</h3>
+<p class="p">400 BAD_REQUEST 显示字段问题；401 引导登录；409 REVISION_CONFLICT/SEQUENCE_CONFLICT 重新读取后由用户决定；422 CONDITION_NOT_MET/PUBLISH_BLOCKED 展示原因。旧请求的幂等响应可能 seq 较小，前端不能用它倒退当前状态，应重新读取会话。500 保留输入并允许同 requestId 安全重试。</p>
+<p class="small">工程依赖按 lock 文件固定，暂用 Prisma 6.19 的 $transaction 接口；不能照最新版 Prisma 文档混用另一代 API。参考：fastify.dev/docs/latest/Reference/Validation-and-Serialization/；vite.dev/guide/；reactflow.dev/learn/customization/custom-nodes。</p>
+</section>
+</html>

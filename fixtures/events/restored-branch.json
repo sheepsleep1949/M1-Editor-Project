@@ -1,0 +1,86 @@
+{
+  "session": {
+    "id": "session_fixture_branch",
+    "versionId": "version_fixture_1",
+    "playerId": "player_fixture",
+    "initialState": {
+      "nodeId": "n_start",
+      "values": {
+        "v_key": true,
+        "v_clue": true
+      }
+    },
+    "state": {
+      "nodeId": "n_good",
+      "values": {
+        "v_key": false,
+        "v_clue": true
+      }
+    },
+    "seq": 2,
+    "source": {
+      "saveId": "save_fixture_1",
+      "sessionId": "session_fixture_1",
+      "eventSeq": 2
+    },
+    "shareWithCreator": true,
+    "status": "ended"
+  },
+  "events": [
+    {
+      "id": "event_branch_1",
+      "sessionId": "session_fixture_branch",
+      "versionId": "version_fixture_1",
+      "seq": 1,
+      "requestId": "request_branch_1",
+      "choiceId": "c_enter",
+      "before": {
+        "nodeId": "n_start",
+        "values": {
+          "v_key": true,
+          "v_clue": true
+        }
+      },
+      "after": {
+        "nodeId": "n_archive",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "delta": [
+        {
+          "variableId": "v_key",
+          "before": true,
+          "after": false
+        }
+      ],
+      "createdAt": "2026-10-23T00:00:03.000Z"
+    },
+    {
+      "id": "event_branch_2",
+      "sessionId": "session_fixture_branch",
+      "versionId": "version_fixture_1",
+      "seq": 2,
+      "requestId": "request_branch_2",
+      "choiceId": "c_find",
+      "before": {
+        "nodeId": "n_archive",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "after": {
+        "nodeId": "n_good",
+        "values": {
+          "v_key": false,
+          "v_clue": true
+        }
+      },
+      "delta": [],
+      "createdAt": "2026-10-23T00:00:04.000Z"
+    }
+  ],
+  "expected": "MATCH"
+}

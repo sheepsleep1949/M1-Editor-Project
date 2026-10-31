@@ -1,0 +1,30 @@
+{
+  "data": {
+    "sessionId": "session_fixture_1",
+    "versionId": "version_fixture_1",
+    "seq": 3,
+    "state": {
+      "nodeId": "n_archive",
+      "values": {
+        "v_key": false,
+        "v_clue": true
+      }
+    },
+    "choices": [
+      {
+        "id": "c_find",
+        "label": "按线索查找",
+        "available": true,
+        "unmet": []
+      },
+      {
+        "id": "c_leave",
+        "label": "结束调查",
+        "available": true,
+        "unmet": []
+      }
+    ],
+    "eventId": "event_fixture_3",
+    "status": "active"
+  }
+}

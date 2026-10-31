@@ -1,0 +1,34 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>M1 创作编辑任务与交接</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>M1 创作编辑任务与交接</h1>
+<section><h2>前期成果与界面字段设计</h2>
+<p class="p">你负责让创作者通过表单和画布配置故事，并正确保存草稿。前期契约、配置样例、字段设计和只读结构样例已经形成；下一步从真实草稿读写开始。共同基线为《00 共同接口与交接规范》。机器可读契约在 packages/contracts/openapi.json；同名字段与错误码不得各自改写。</p>
+<h3 class="h">已交付给你的文件</h3>
+<p class="p">packages/contracts/src/index.ts 与 story.schema.json；fixtures/stories 下两套 story/layout；fixtures/api 下保存与冲突请求响应；apps/web/src/main.tsx 的登录与只读画布；handoff/editor-wireframe.html 的编辑页布局设计。</p>
+<table><thead><tr><th>界面区域</th><th>字段与行为</th><th>不得混入</th></tr></thead><tbody><tr><td>活动列表</td><td>title、revision、最近发布版本；新建、继续编辑</td><td>玩家进度和其他用户活动</td></tr><tr><td>节点属性</td><td>id 稳定；title/body 可改；kind=scene/ending；media 引用</td><td>节点专属业务代码</td></tr><tr><td>选择配置</td><td>label、targetNodeId；条件变量和值；效果变量和值</td><td>任意 JavaScript 或固定钥匙判断</td></tr><tr><td>变量表</td><td>id、label、kind、initial；item/flag 合计最多 8 个</td><td>运行中的玩家变量值</td></tr><tr><td>画布</td><td>positions[nodeId]、viewport；连线来自 choices</td><td>重复存第二套节点关系</td></tr><tr><td>检查面板</td><td>问题码、nodeId、choiceId、state 与 path</td><td>把客户端检查结果当发布授权</td></tr></tbody></table>
+<h3 class="h">编辑行为已经定下</h3>
+<p class="p">新增记录生成 ID；修改标题不换 ID。删除节点时提示影响的选择，确认后同次删除相连选择并更新起点，避免留下隐性链接。结局不能配置出口。条件只允许选择已声明变量；空条件表示总允许；多个条件表示 AND。变量删除必须先列出引用，禁止直接损坏所有选项。</p>
+<p class="p">草稿可以处于未完成状态：JSON 类型合法即可保存，结构错误交给检查面板展示并阻断发布。服务端不接受运行状态、ownerId、versionId 混进草稿。保存失败保留本地内容并提示失败，只有服务端返回新 revision 才显示保存成功。</p>
+<p class="small">当前画布只读，不能把它算成已完成编辑器。两套故事以配置文件交付；从网页创建第二故事仍是后续验收。</p>
+</section>
+<section><h2>接口 接入步骤与交接清单</h2>
+<h3 class="h">你要实现的接口</h3>
+<pre class="code">GET  /api/v1/activities<br>POST /api/v1/activities<br>GET  /api/v1/activities/{activityId}/draft<br>PUT  /api/v1/activities/{activityId}/draft<br>GET  /api/v1/assets</pre>
+<p class="p">新建传 {title,requestId}，返回 Draft，HTTP 201。保存传 {expectedRevision,story,layout}，HTTP 200 返回 Draft，revision 加一。服务端从登录会话取得 ownerId；读写都核对活动归属。完整示例见 fixtures/api/save-draft.request.json 与 response.json。</p>
+<pre class="code">保存核心条件：UPDATE Draft<br>WHERE activityId = 参数 AND revision = expectedRevision<br>SET story = 请求内容, layout = 请求布局, revision = revision + 1<br>影响行数为 0 -&gt; 409 REVISION_CONFLICT</pre>
+<h3 class="h">你调用他人的接口</h3>
+<p class="p">调用 M3 的 POST activities/{id}/checks，传当前 revision，按 nodeId/choiceId 定位。调用 M4 的 POST activities/{id}/versions，传 expectedRevision/requestId；发布失败展示服务器原因。任何编辑或保存导致 revision 变化后，旧报告标为过期。素材只读 assetId，不把磁盘路径写进组件。</p>
+<h3 class="h">按这个顺序交接</h3>
+<p class="p">1 从 M4 接登录、数据库与资源归属约定，先实现读取和保存。2 将两个 fixture 都导入画布，交给 M2/M3 验证格式。3 与 M3 用一个缺失目标错误核对定位。4 与 M4 用双标签页及“检查后修改再发布”验证冲突。5 提供编辑指南给 M5 编写完整演示。</p>
+<table><thead><tr><th>你交出的材料</th><th>接收方</th><th>对方必须验证</th></tr></thead><tbody><tr><td>草稿 API 与保存示例</td><td>M4</td><td>本人可读写、他人不可读写，旧 revision 不覆盖</td></tr><tr><td>故事与布局样例</td><td>M2 / M3</td><td>布局变化不影响条件、可选项和结局</td></tr><tr><td>检查定位 UI</td><td>M3</td><td>问题定位到指定 choice，不能仅滚到节点标题</td></tr><tr><td>作者操作步骤</td><td>M5</td><td>可从空白内容完成一条真实流程</td></tr></tbody></table>
+<p class="small">接口暂不可用时可用 fixtures 开发，但标记为样例模式。进入 G2 时必须切换真实 API，禁止继续读本地固定故事伪装保存成功。</p>
+</section>
+<section><h2>后续任务 完成条件与门禁</h2>
+<table><thead><tr><th>阶段</th><th>要完成的工作</th><th>必须拿出的证据</th></tr></thead><tbody><tr><td>W2 M1-2a</td><td>活动与草稿 CRUD；服务端归属及 revision 条件更新</td><td>两账号接口测试；双标签页保存冲突；重启后数据仍在</td></tr><tr><td>W2至W3 M1-2b</td><td>画布编辑、节点和选择表单、保存恢复</td><td>新增修改删除后重开一致；异常请求不丢本地输入</td></tr><tr><td>W3至W4 M1-3</td><td>变量条件、素材目录、可关闭音频与通用提示</td><td>非法类型拒绝；无素材可玩；缺图不阻断</td></tr><tr><td>W4至W6 M1-4</td><td>检查面板与发布入口</td><td>过期报告失效；错误定位准确；发布失败保留草稿</td></tr><tr><td>W6至W7 M1-5</td><td>用页面创建第二故事，作者指南，外部创作测试</td><td>不改核心代码；三人试用，至少两人在 20 分钟内独立完成指定创作任务</td></tr></tbody></table>
+<h3 class="h">本模块门禁</h3>
+<p class="p">M3 和 M4 从空白活动开始创建分支、配置变量、保存重开、发现并修正错误、发布固定版本。全过程用真实接口。草稿丢失、静默覆盖、假保存、第二故事依赖代码特判，任何一项存在都不能放行。</p>
+<h3 class="h">接手后的第一天</h3>
+<p class="p">运行共同启动步骤，登录看两套配置；读 Story 与 Layout 类型；将画布中的读取逻辑换成可注入的数据源，先接 GET draft。当天交一个能读取本人草稿、明确处理未登录和无权访问的页面，提交给 M4 复核。不要先花时间做动画。</p>
+<h3 class="h">完成记录</h3>
+<p class="p">交接单填写：任务 ID、提交、修改文件、接口版本、验证命令与结果、未解决问题、接收方和日期。M1 不负责改引擎或直接写玩家状态；规则变化通过 contracts 讨论，交给 M2 实现。</p>
+<p class="small">前期成果状态：材料与样例已完成，本机只读展示可运行；队友互审、草稿业务和最终模块验收尚待完成。</p>
+</section>
+</html>

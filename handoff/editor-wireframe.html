@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M1 编辑页字段与布局交接示意</title>
+<style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;background:#eef2f5;margin:28px;color:#203040}h1{font-size:26px}main{display:grid;grid-template-columns:210px 1fr 320px;gap:18px}section{background:white;padding:20px;border:1px solid #c9d5df;border-radius:10px}header{display:flex;justify-content:space-between;background:white;padding:16px 22px;margin:18px 0}.node{border:1px solid #8ca5bc;border-radius:8px;padding:16px;margin:20px;text-align:center}aside{background:#fff9e6;padding:12px}.field{background:#f3f6f8;margin:10px 0;padding:8px}footer{background:white;padding:20px;margin-top:20px}small{color:#526677}@media(max-width:1000px){main{grid-template-columns:1fr}}</style>
+<h1>M1 编辑页字段与布局交接示意</h1><aside>这是界面设计材料，不是可保存的编辑器。真实读写、状态和检查必须接文档规定的 API。</aside>
+<header><b>活动标题　修订 revision　保存状态</b><span>保存草稿　检查当前修订　发布固定版本</span></header>
+<main>
+<section><h2>活动与变量</h2><p>活动列表 / 新建活动</p><div class="field">变量 id / label</div><div class="field">kind = item 或 flag</div><div class="field">initial = true 或 false</div><p>数量显示 2 / 8</p><small>变量删除先展示被哪些选择引用。不能修改运行中的玩家状态。</small></section>
+<section><h2>节点画布</h2><div class="node">节点 A　title<br>节点 ID 稳定</div><p style="text-align:center">↓ 选择 label / 条件摘要</p><div class="node">节点 B　title<br>可与任意节点连接</div><p>拖拽只改变 layout.positions，连线的权威来源是 story.nodes[].choices[].targetNodeId。</p><small>选中节点后在右侧编辑；不会为每个故事创建独立组件。</small></section>
+<section><h2>当前节点属性</h2><div class="field">id 只读 / title / body</div><div class="field">kind = scene 或 ending</div><div class="field">backgroundId / audioId 可空</div><h3>选择属性</h3><div class="field">choice.id / label / targetNodeId</div><div class="field">conditions[]：variableId + equals</div><div class="field">effects[]：variableId + value</div><small>只使用表单，不要求创作者写代码。正文按纯文本渲染。</small></section>
+</main><footer><h2>检查结果与定位</h2><p>revision / complete / visitedStates / publishable</p><p>问题码 → nodeId → choiceId → 未满足条件 → 可执行反例路径</p><p>修改草稿后旧结果标为过期。保存和发布失败必须保留用户输入；不自动覆盖冲突修订。</p></footer></html>

@@ -1,0 +1,33 @@
+{
+  "positions": {
+    "radio_start": {
+      "x": 0,
+      "y": 0
+    },
+    "radio_hall": {
+      "x": 270,
+      "y": 0
+    },
+    "radio_control": {
+      "x": 540,
+      "y": 0
+    },
+    "radio_end_quiet": {
+      "x": 0,
+      "y": 200
+    },
+    "radio_end_stop": {
+      "x": 270,
+      "y": 200
+    },
+    "radio_end_keep": {
+      "x": 540,
+      "y": 200
+    }
+  },
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

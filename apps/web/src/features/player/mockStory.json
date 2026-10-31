@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "rulesVersion": "1.0",
+  "title": "丢失的笔记本",
+  "entryNodeId": "n_start",
+  "variables": [
+    { "id": "key", "label": "钥匙", "kind": "item", "initial": false }
+  ],
+  "nodes": [
+    {
+      "id": "n_start",
+      "title": "教室",
+      "kind": "scene",
+      "body": "你在教室里，桌上放着一把生锈的钥匙。",
+      "media": {},
+      "choices": [
+        {
+          "id": "c_take",
+          "label": "拿走钥匙",
+          "targetNodeId": "n_door",
+          "conditions": [],
+          "effects": [{ "variableId": "key", "value": true }]
+        },
+        {
+          "id": "c_door",
+          "label": "直接去档案室",
+          "targetNodeId": "n_door",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "n_door",
+      "title": "档案室门口",
+      "kind": "scene",
+      "body": "你来到档案室门口，门紧锁着。",
+      "media": {},
+      "choices": [
+        {
+          "id": "c_open",
+          "label": "用钥匙开门",
+          "targetNodeId": "n_good",
+          "conditions": [{ "variableId": "key", "equals": true }],
+          "effects": []
+        },
+        {
+          "id": "c_back",
+          "label": "回到教室",
+          "targetNodeId": "n_start",
+          "conditions": [],
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "n_good",
+      "title": "档案室内",
+      "kind": "ending",
+      "body": "你打开了档案室，找到了丢失的笔记本。",
+      "media": {},
+      "choices": []
+    }
+  ]
+}

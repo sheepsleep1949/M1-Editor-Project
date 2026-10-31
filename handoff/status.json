@@ -1,0 +1,28 @@
+{
+  "contractVersion": "1.0",
+  "status": "prepared-awaiting-team-review",
+  "actualTeamNamesKnown": false,
+  "completedLocally": [
+    "M1-1 剧情与表单契约 配置样例 只读结构页面",
+    "M2-1 规则语义 独立预期 纯引擎初版",
+    "M3-1 结构检查 错误配置 与后续状态检查样例",
+    "M4-1 工程结构 数据模型 迁移 登录与本地启动材料",
+    "M5-1 正常 恢复 损坏事件样例 与反馈绑定协议"
+  ],
+  "requiresHumanEvidence": [
+    "五人实名认领与互审",
+    "至少两次目标用户访谈或任务观察",
+    "成员电脑的独立安装与启动"
+  ],
+  "notImplemented": [
+    "草稿业务 CRUD 与可编辑画布",
+    "有限状态搜索与发布门禁",
+    "固定版本发布",
+    "权威会话执行与状态事件事务",
+    "存档与恢复",
+    "正式回放和反馈业务",
+    "对外部署与外部用户测试"
+  ],
+  "fullG0Passed": false,
+  "fullG1Passed": false
+}

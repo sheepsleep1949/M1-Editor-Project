@@ -1,0 +1,32 @@
+<!doctype html><html lang="zh-CN"><meta charset="UTF-8"><title>M2 规则试玩任务与交接</title><style>body{font:16px/1.8 "Microsoft YaHei",sans-serif;max-width:1000px;margin:40px auto;color:#202b33}h1,h2,h3{color:#000}section{margin:40px 0}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #d9d9d9;padding:10px;text-align:left}th{background:#e8eff4}pre{white-space:pre-wrap;word-break:break-word;background:#f1f4f6;padding:16px}.small{font-size:14px;color:#425363}</style><h1>M2 规则试玩任务与交接</h1>
+<section><h2>前期成果与规则语义</h2>
+<p class="p">你负责唯一规则引擎、玩家体验和服务端选择执行。前期已实现纯函数和独立预期测试，下一步把它接到固定版本与服务端会话。共同基线为《00 共同接口与交接规范》。机器可读契约在 packages/contracts/openapi.json；同名字段与错误码不得各自改写。</p>
+<h3 class="h">已交付给你的文件</h3>
+<p class="p">packages/engine/src/index.ts；packages/contracts/src/index.ts 与 ports.ts；fixtures/expected/rules.expected.json；tests/engine.test.ts；选择请求和响应见 fixtures/api/execute-choice.*.json。</p>
+<table><thead><tr><th>规则</th><th>明确行为</th></tr></thead><tbody><tr><td>条件</td><td>conditions 全部满足才允许；空数组总允许；只读取操作前的布尔值</td></tr><tr><td>效果</td><td>effects 赋值后进入目标；同一变量不重复赋值；只输出真正变化的 delta</td></tr><tr><td>状态</td><td>包含 nodeId 和全部变量；不存在或多出的变量状态拒绝</td></tr><tr><td>道具</td><td>道具只是 kind=item 的布尔变量；获得设 true，消耗设 false</td></tr><tr><td>结局</td><td>kind=ending 后 getChoices=[]，执行返回 AT_ENDING</td></tr><tr><td>历史</td><td>影响后续的历史必须存为 flag；不得用 UI 点击次数隐式决定</td></tr></tbody></table>
+<h3 class="h">手工确定的路径</h3>
+<pre class="code">初始 n_start: key=false clue=false<br>c_search -&gt; n_desk: key=true clue=true<br>c_return -&gt; n_start: key=true clue=true<br>c_enter  -&gt; n_archive: key=false clue=true<br>c_find   -&gt; n_good: key=false clue=true</pre>
+<p class="p">初始直接 c_enter 返回 CONDITION_NOT_MET；初始 c_find 返回 CHOICE_NOT_FOUND；取得钥匙后再搜索被拒绝；c_quit 到合法退出结局。第二故事使用完全不同的节点和变量，已有测试验证同一实现可运行。</p>
+<p class="small">引擎不接收活动名称判断、不访问 DB、不读取时钟、不产生随机数。选项是否开放必须来自同一规则实现；前端禁用按钮不能代替服务端校验。</p>
+</section>
+<section><h2>执行接口与事务交接</h2>
+<pre class="code">POST /api/v1/versions/{versionId}/sessions<br>body: {requestId, shareWithCreator}<br>GET  /api/v1/sessions/{sessionId}<br>POST /api/v1/sessions/{sessionId}/choices<br>body: {choiceId, expectedSeq, requestId}</pre>
+<p class="p">创建试玩返回 Session，seq=0，初始状态来自版本配置，playerId 来自登录。选择响应包含 sessionId、versionId、seq、state、choices、eventId、status。禁止接受客户端提供的“执行后状态”；服务端只接受选择意图。</p>
+<h3 class="h">事务中的固定顺序</h3>
+<p class="p">鉴权并确认归属 → 按请求 ID 查同次操作回执 → 比较请求摘要 → 验证 expectedSeq → 读取固定版本与状态 → applyChoice → 按旧 seq 条件更新会话 → appendEvent(tx,...) → 提交。回执命中时返回原响应，不能先因旧 seq 拒绝正常重试。</p>
+<p class="p">M4 提供 DbTx 与 withTx。你持有事务边界，向 M5 交付 before/after/delta、choiceId、序号和响应；M5 的函数必须使用同一个 tx。状态更新成功而事件写失败时，全部回滚。数据库锁或唯一约束冲突需映射为可处理错误，并只在安全范围内重试整个事务。</p>
+<h3 class="h">你交给别人什么</h3>
+<table><thead><tr><th>接收方</th><th>你的交付</th><th>共同验收</th></tr></thead><tbody><tr><td>M3</td><td>引擎导出、语义、正常与非法选择样例</td><td>检查器逐步执行的状态与人工预期一致</td></tr><tr><td>M5</td><td>ApplyResult、事件内容、同一 tx 参数</td><td>一次成功只有一事件；注入写失败整体回滚</td></tr><tr><td>M4</td><td>会话与状态 Schema、读取当前 seq 的约定</td><td>保存绑定该时刻状态；恢复初始快照可继续执行</td></tr><tr><td>M1</td><td>变量与选项约束、错误码</td><td>表单能表达所有首版规则，无故事特判</td></tr></tbody></table>
+<p class="small">会话 v1 操作量上限建议 500 个成功事件，作为服务端配置项统一管理；达到上限返回 SESSION_LIMIT_REACHED，不能伪装剧情结局。后续扩展长会话时，M2 与 M5 同步增加分页及完整回放读取。</p>
+</section>
+<section><h2>后续任务 完成条件与门禁</h2>
+<table><thead><tr><th>阶段</th><th>任务</th><th>验收条件</th></tr></thead><tbody><tr><td>W2 M2-2a</td><td>建立真实会话与读取接口，接 M4 的版本提供接口</td><td>相同版本新会话各自独立；状态重启后保留</td></tr><tr><td>W2至W3 M2-2b</td><td>玩家页显示正文、选项、道具、结局</td><td>条件由数据决定；刷新恢复服务端状态</td></tr><tr><td>W2至W4 M2-3</td><td>权威选择、并发序号、请求去重、事务</td><td>无钥匙直接 API 拒绝；同序号并发仅一次成功；失败全回滚</td></tr><tr><td>W4至W5 M2-4</td><td>存档恢复界面与旧版本提示</td><td>v2 发布后 v1 存档仍按 v1；新分支继续正确</td></tr><tr><td>W6至W7 M2-5</td><td>引擎 检查 回放一致性回归</td><td>两个故事全部声明结局可达；逐步状态一致</td></tr></tbody></table>
+<h3 class="h">错误必须有稳定结果</h3>
+<p class="p">引擎已有 INVALID_STORY、INVALID_STATE、UNSUPPORTED_VERSION、AT_ENDING、CHOICE_NOT_FOUND、CONDITION_NOT_MET。HTTP 序号冲突用 409 SEQUENCE_CONFLICT；同键异载荷用 409 IDEMPOTENCY_CONFLICT；条件问题用 422。任何拒绝都不得改变状态或产生成功事件。</p>
+<h3 class="h">本模块门禁</h3>
+<p class="p">M3 和 M5 同时通过页面与直接接口操作，核对数据库状态和事件。绕过按钮可作弊、重复扣道具、事件与状态不一致、另写一套条件逻辑，任一存在都阻断验收。关键反例至少包含不同 requestId 同 expectedSeq 的并发，以及同 requestId 不同选择。</p>
+<h3 class="h">接手后的第一天</h3>
+<p class="p">先运行 npm test -- tests/engine.test.ts，逐项解释预期；与 M5 用 normal.json 核对事件字段。随后建 player 服务模块，先读取会话和固定版本，不能用 fixture 代替正式版本接口通过 G1。M4 的发布尚未就绪时可约定测试专用版本种子，但必须标识用途并禁止对外发布。</p>
+<p class="small">已完成：纯引擎初版与前期规则测试。未完成：网页玩家业务、真实状态事件事务、并发验收和模块互审。</p>
+</section>
+</html>
