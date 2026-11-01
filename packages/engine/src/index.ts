@@ -162,4 +162,5 @@ export function applyChoice(
   for (const e of c.effects) next.values[e.variableId] = e.value;
   return { ok: true, state: next, delta };
 }
-// Complete state space checking and event replay are explicitly the next tasks for M3 and M5.
+// Event replay is explicitly the next task for M5.
+export { validateStory, VALIDATOR_VERSION } from "./stateSearch";

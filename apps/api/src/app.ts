@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import type { PrismaClient } from "@prisma/client";
 import { verifyPassword, newToken, tokenHash } from "./auth";
 import { registerPlayerRoutes } from "./modules/player";
+import { registerValidationRoutes } from "./modules/validation";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 const repoRoot = resolve(import.meta.dirname, "../../..");
@@ -155,5 +156,6 @@ export async function createApp(db: PrismaClient) {
       },
     );
   await registerPlayerRoutes(app, db);
+  await registerValidationRoutes(app, db, { userFor, fail });
   return app;
 }

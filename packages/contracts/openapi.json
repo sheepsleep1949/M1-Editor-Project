@@ -1015,7 +1015,7 @@
           "M3"
         ],
         "x-owner": "M3",
-        "x-implementation-status": "planned",
+        "x-implementation-status": "implemented",
         "description": "仅所有者；服务端读取同修订快照；预算由服务端配置。返回问题不算 HTTP 失败；complete=false 必须 publishable=false。",
         "security": [
           {
